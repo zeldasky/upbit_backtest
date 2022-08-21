@@ -14,15 +14,16 @@ coin_num = 0
 prev = 0
 cur = 0
 min_rate = 1.02
-max_rate = 1.02
-force_cell_rate = 1.02
-force_buy_rate = 1.001
+max_rate = 1.005
+force_sell_rate = 1.01
+force_buy_rate = 1.01
 min_rsi = 20
 max_rsi = 80
 
 start_price = 0
 end_price = 0
 order_price = 0
+total_profit = 0
 
 class backTest:
 	def display_account(self, title, tics, start_time, end_time):
@@ -36,6 +37,7 @@ class backTest:
 		print("Change Rate : ", round(((end_price-start_price)*100/start_price),2), "(%)")
 		print("Profit : ", round((seed-first)*100/first,2), "(%)")
 		print("----------------------")
+		return round((seed-first)*100/first,2) 
 
 	def sell_condition(self,price):
 		ret = False
@@ -69,20 +71,30 @@ class backTest:
 			if force == True:
 				sell = price*coin_num 
 				seed += sell
+				'''
+				print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+				print("[Sell] Seed: ", seed)
+				print("\n")
+				'''
 				coin_num = 0
 				order_price = 0
-				order.append("매도")
+				order.append("Sell")
 			else:
 				if self.sell_condition(price):
 					sell = price*coin_num 
 					seed += sell
+					'''
+					print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+					print("[Sell] Seed: ", seed)
+					print("\n")
+					'''
 					coin_num = 0
 					order_price = 0
-					order.append("매도")
+					order.append("Sell")
 				else:
-					order.append("관망")
+					order.append("Nothing")
 		else:
-			order.append("관망")
+			order.append("Nothing")
 
 	def buy(self, price, force):
 		global seed, coin_num
@@ -92,21 +104,32 @@ class backTest:
 				coin_num += buy_num
 				seed -= (buy_num*price) 
 				order_price = price
-				order.append("매수")
+				order.append("Buy")
+				'''
+				print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+				print("[Buy] Seed: ", seed)
+				'''
 			else:
 				if self.buy_condition(price):
 					buy_num = int(seed/price)
 					coin_num += buy_num
 					seed -= (buy_num*price) 
 					order_price = price
-					order.append("매수")
+					order.append("Buy")
+					'''
+					print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+					print("[Buy] Seed: ", seed)
+					'''
 				else:
-					order.append("관망")
+					order.append("Nothing")
 		else:
-			order.append("관망")
+			order.append("Nothing")
 
 	def run_backTest(self, ticker, tic, start, end, display_chart):
-		global seed, coin_num, start_price, end_price
+		global seed, first, coin_num, start_price, end_price, min_price, max_price
+		seed = first
+		coin_num =0
+
 		order.clear()
 		data = db.make_tick_db(start, end, ticker, tic)
 		for i in range(len(data)):
@@ -121,7 +144,7 @@ class backTest:
 				end_price = price
 
 			if math.isnan(rsi_k) or math.isnan(rsi_d):
-				order.append("관망")
+				order.append("Nothing")
 				continue
 
 			if i > 0:
@@ -134,25 +157,20 @@ class backTest:
 			elif (rsi_k < rsi_d) and (rsi_k > max_rsi):
 				#print("[normal] time: ", time)
 				self.sell(price, False)
-			#강제 매수 - rsi 20 이상에서 stoch 상승 그리고 가격이 buy_rate이상 높아지는 경우.
-			#elif (rsi_k > rsi_d) and (rsi_k > min_rsi) and (data.iloc[i-1]['close'] < data.iloc[i]['close']*force_buy_rate):
-				#print("[force] time: ", time)
-				#self.buy(price, True)
-			#강제 매도 - stoch 하락으로 변하는데 매수가 이하로 내려오는 경우
-			#elif (rsi_k < rsi_d) and (rsi_k < max_rsi) and (order_price >= price*force_cell_rate):
-				#print("[force] time: ", time)
-				#self.sell(price, True)
 			else:
-				order.append("관망")
+				order.append("Nothing")
 
 		sell = price*coin_num 
 		seed += sell
 		coin_num = 0
-		self.display_account(ticker, tic, start, end)
+		total_profit = self.display_account(ticker, tic, start, end)
 		data['order'] = order
+
 		if display_chart:
 			dw.display_rsi(data)
 
+		return total_profit
+			
 if __name__ == '__main__':
 	a = backTest()
-	a.run_backTest('KRW-ETH',60,'2022-03-01 00:00:00', '2022-06-01 00:00:00', True)
+	a.run_backTest('KRW-ETH',15,'2022-08-01 00:00:00', '2022-08-21 00:00:00', False)
