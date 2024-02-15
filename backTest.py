@@ -1,8 +1,6 @@
-import pandas as pd
 import tick_db as db
 import math
 import rsi_sample as dw
-import datetime
 
 order = list()
 first = 10000000
@@ -13,12 +11,12 @@ coin_num = 0
 
 prev = 0
 cur = 0
-min_rate = 1.02
-max_rate = 1.005
+min_rate = 1.01
+max_rate = 1.01
 force_sell_rate = 1.01
 force_buy_rate = 1.01
-min_rsi = 20
-max_rsi = 80
+oversold_rsi = 20
+overbought_rsi = 80
 
 start_price = 0
 end_price = 0
@@ -27,7 +25,7 @@ total_profit = 0
 
 class backTest:
 	def display_account(self, title, tics, start_time, end_time):
-		print("----------------------")
+		print("-----------------------------------------------------------------------------")
 		print("Ticker, Tic: ", title, tics)
 		print("Range : ", start_time,"-",end_time)
 		print("Start Seed: ", "{:,}".format(round(first)), "won")
@@ -36,8 +34,8 @@ class backTest:
 		print("End Price: ", "{:,}".format(round(end_price)), "won")
 		print("Change Rate : ", round(((end_price-start_price)*100/start_price),2), "(%)")
 		print("Profit : ", round((seed-first)*100/first,2), "(%)")
-		print("----------------------")
-		return round((seed-first)*100/first,2) 
+		print("-----------------------------------------------------------------------------")
+		return round((seed-first)*100/first,2)
 
 	def sell_condition(self,price):
 		ret = False
@@ -71,11 +69,8 @@ class backTest:
 			if force == True:
 				sell = price*coin_num 
 				seed += sell
-				'''
-				print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-				print("[Sell] Seed: ", seed)
-				print("\n")
-				'''
+				# print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+				# print("[Sell] Seed: ", seed)
 				coin_num = 0
 				order_price = 0
 				order.append("Sell")
@@ -83,11 +78,8 @@ class backTest:
 				if self.sell_condition(price):
 					sell = price*coin_num 
 					seed += sell
-					'''
-					print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-					print("[Sell] Seed: ", seed)
-					print("\n")
-					'''
+					# print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+					# print("[Sell] Seed: ", seed)
 					coin_num = 0
 					order_price = 0
 					order.append("Sell")
@@ -105,10 +97,8 @@ class backTest:
 				seed -= (buy_num*price) 
 				order_price = price
 				order.append("Buy")
-				'''
-				print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-				print("[Buy] Seed: ", seed)
-				'''
+				# print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+				# print("[Buy] Seed: ", seed)
 			else:
 				if self.buy_condition(price):
 					buy_num = int(seed/price)
@@ -116,10 +106,8 @@ class backTest:
 					seed -= (buy_num*price) 
 					order_price = price
 					order.append("Buy")
-					'''
-					print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-					print("[Buy] Seed: ", seed)
-					'''
+					# print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
+					# print("[Buy] Seed: ", seed)
 				else:
 					order.append("Nothing")
 		else:
@@ -151,16 +139,14 @@ class backTest:
 				pre = data.iloc[i-1]['rsi_k']
 				cur = rsi_k
 
-			if (rsi_k > rsi_d) and (rsi_k < min_rsi):
-				#print("[normal] time: ", time)
+			if (rsi_k > rsi_d) and (rsi_k > overbought_rsi):
 				self.buy(price, False)
-			elif (rsi_k < rsi_d) and (rsi_k > max_rsi):
-				#print("[normal] time: ", time)
+			elif (rsi_k < rsi_d) and (rsi_k < oversold_rsi):
 				self.sell(price, False)
 			else:
 				order.append("Nothing")
 
-		sell = price*coin_num 
+		sell = price*coin_num
 		seed += sell
 		coin_num = 0
 		total_profit = self.display_account(ticker, tic, start, end)
@@ -170,7 +156,9 @@ class backTest:
 			dw.display_rsi(data)
 
 		return total_profit
-			
+
+
 if __name__ == '__main__':
 	a = backTest()
-	a.run_backTest('KRW-ETH',15,'2022-08-01 00:00:00', '2022-08-21 00:00:00', False)
+	# a.run_backTest('KRW-ETH',15,'2023-01-01 00:00:00', '2023-02-01 00:00:00', False)
+	a.run_backTest('KRW-ETH',60,'2024-01-01 00:00:00', '2024-01-27 00:00:00', False)

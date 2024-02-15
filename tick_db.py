@@ -1,4 +1,3 @@
-import pandas as pd
 import pyupbit as up
 import rsi_sample as rsi
 

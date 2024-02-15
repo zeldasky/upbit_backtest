@@ -1,15 +1,8 @@
-import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-import pandas as pd
-import requests
 import talib as ta
-import plotly.offline as pyo
 import plotly.graph_objs as go
-from datetime import datetime
-
-import numpy as np
 
 def get_stoch_rsi(data):
 	close = data['close']
