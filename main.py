@@ -1,6 +1,17 @@
 import tick_db as db
 import math
 import rsi_sample as dw
+import sys
+import logging
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.INFO)
+my_format = logging.Formatter('%(message)s')
+ch.setFormatter(my_format)
+
+LOGGER = logging.getLogger()
+LOGGER.addHandler(ch)
+LOGGER.setLevel(logging.INFO)
 
 order = list()
 first = 10000000
@@ -25,16 +36,17 @@ total_profit = 0
 
 class backTest:
 	def display_account(self, title, tics, start_time, end_time):
-		print("-----------------------------------------------------------------------------")
-		print("Ticker, Tic: ", title, tics)
-		print("Range : ", start_time,"-",end_time)
-		print("Start Seed: ", "{:,}".format(round(first)), "won")
-		print("End Seed: ", "{:,}".format(round(seed)), "won")
-		print("Start Price: ", "{:,}".format(round(start_price)), "won")
-		print("End Price: ", "{:,}".format(round(end_price)), "won")
-		print("Change Rate : ", round(((end_price-start_price)*100/start_price),2), "(%)")
-		print("Profit : ", round((seed-first)*100/first,2), "(%)")
-		print("-----------------------------------------------------------------------------")
+
+		logging.info("\n-----------------------------------------------------------------------------")
+		logging.info(f"Ticker, Tic: {title}, {tics}")
+		logging.info(f"Range : {start_time} - {end_time}")
+		logging.info(f"Start Seed: {round(first)} won")
+		logging.info(f"End Seed: {round(seed)} won")
+		logging.info(f"Start Price: {round(start_price)} won")
+		logging.info(f"End Price: {round(end_price)} won")
+		logging.info(f"Change Rate : {round(((end_price-start_price)*100/start_price),2)} %)")
+		logging.info(f"Profit : {round((seed-first)*100/first,2)} %")
+		logging.info("-----------------------------------------------------------------------------\n")
 		return round((seed-first)*100/first,2)
 
 	def sell_condition(self,price):
@@ -47,7 +59,7 @@ class backTest:
 			ret = True
 		else:
 			max_price = price
-		#print("sell condition: ", max_price, "-", price)
+		logging.debug(f"sell condition: { max_price} - {price}")
 		return ret
 
 	def buy_condition(self, price):
@@ -60,7 +72,7 @@ class backTest:
 			ret = True
 		else:
 			min_price = price
-		#print("buy condition: ", min_price, "-", price)
+		logging.debug(f"buy condition: {min_price} - {price}")
 		return ret
 
 	def sell(self, price, force):
@@ -69,8 +81,8 @@ class backTest:
 			if force == True:
 				sell = price*coin_num 
 				seed += sell
-				# print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-				# print("[Sell] Seed: ", seed)
+				logging.debug(f"[Sell] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
+				logging.debug(f"[Sell] Seed: {seed}")
 				coin_num = 0
 				order_price = 0
 				order.append("Sell")
@@ -78,8 +90,8 @@ class backTest:
 				if self.sell_condition(price):
 					sell = price*coin_num 
 					seed += sell
-					# print("[Sell] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-					# print("[Sell] Seed: ", seed)
+					logging.debug(f"[Sell] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
+					logging.debug(f"[Sell] Seed: {seed}")
 					coin_num = 0
 					order_price = 0
 					order.append("Sell")
@@ -97,8 +109,8 @@ class backTest:
 				seed -= (buy_num*price) 
 				order_price = price
 				order.append("Buy")
-				# print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-				# print("[Buy] Seed: ", seed)
+				logging.debug(f"[Buy] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
+				logging.debug(f"[Buy] Seed: {seed}")
 			else:
 				if self.buy_condition(price):
 					buy_num = int(seed/price)
@@ -106,8 +118,8 @@ class backTest:
 					seed -= (buy_num*price) 
 					order_price = price
 					order.append("Buy")
-					# print("[Buy] price: ", price, " - number: ", coin_num, " - coin Seed: ", price*coin_num)
-					# print("[Buy] Seed: ", seed)
+					logging.debug(f"[Buy] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
+					logging.debug(f"[Buy] Seed: {seed}")
 				else:
 					order.append("Nothing")
 		else:
@@ -160,5 +172,4 @@ class backTest:
 
 if __name__ == '__main__':
 	a = backTest()
-	# a.run_backTest('KRW-ETH',15,'2023-01-01 00:00:00', '2023-02-01 00:00:00', False)
-	a.run_backTest('KRW-ETH',60,'2024-01-01 00:00:00', '2024-01-27 00:00:00', False)
+	a.run_backTest('KRW-ETH',240,'2024-02-01 00:00:00', '2024-02-19 00:00:00', False)

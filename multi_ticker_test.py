@@ -1,5 +1,6 @@
+import logging
 from datetime import datetime, timedelta
-import backTest as bt
+import main as bt
 
 date_str = '2019-01-01 00:00:00'
 start = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
@@ -16,8 +17,6 @@ for i in range(1,2): #Ticker
 		for k in range(16): #Range
 			total_profit =  total_profit + up.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), False)
 
-	print("\n")
-	print("======== Total Profit =========")
-	print(round(total_profit, 2), "(%)")
-	print("===============================")
-	print("\n")
+	logging.info(f"\n======== Total Profit =========")
+	logging.info(f"{round(total_profit, 2)} %")
+	logging.info(f"============================\n")
