@@ -3,6 +3,7 @@ import math
 import rsi_sample as dw
 import sys
 import logging
+from datetime import datetime, timedelta
 
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.INFO)
@@ -135,6 +136,7 @@ class backTest:
 		for i in range(len(data)):
 			rsi_k = data.iloc[i]['rsi_k']
 			rsi_d = data.iloc[i]['rsi_d']
+			signal = data.iloc[i]['signal']
 			price = data.iloc[i]['close']
 			time = data.index[i]
 
@@ -151,9 +153,9 @@ class backTest:
 				pre = data.iloc[i-1]['rsi_k']
 				cur = rsi_k
 
-			if (rsi_k > rsi_d) and (rsi_k > overbought_rsi):
+			if (rsi_k > rsi_d) and (rsi_k > overbought_rsi) and signal > 0:
 				self.buy(price, False)
-			elif (rsi_k < rsi_d) and (rsi_k < oversold_rsi):
+			elif (rsi_k < rsi_d) and (rsi_k < oversold_rsi) and signal < 0:
 				self.sell(price, False)
 			else:
 				order.append("Nothing")
@@ -172,4 +174,20 @@ class backTest:
 
 if __name__ == '__main__':
 	a = backTest()
-	a.run_backTest('KRW-ETH',240,'2024-02-01 00:00:00', '2024-02-19 00:00:00', False)
+	# a.run_backTest('KRW-ETH',240,'2023-01-01 00:00:00', '2024-01-01 00:00:00', False)
+	date_str = '2023-09-01 00:00:00'
+	start = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+
+	time_gap = timedelta(days=60)
+	tic = ['240']
+	ticker = ['KRW-ETH', 'KRW-XRP']
+	total_profit = [0, 0]
+	for i in range(0,2): #Ticker
+		for j in range(1): #Tic
+			for k in range(3): #Range
+				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), False)
+
+	logging.info(f"\n======== Total Profit =========")
+	logging.info(f"{ticker[0]} : {round(total_profit[0], 2)} %")
+	logging.info(f"{ticker[1]} : {round(total_profit[1], 2)} %")
+	logging.info(f"============================\n")
