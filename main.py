@@ -14,7 +14,8 @@ LOGGER = logging.getLogger()
 LOGGER.addHandler(ch)
 LOGGER.setLevel(logging.INFO)
 
-order = list()
+buy_order = list()
+sell_order = list()
 first = 10000000
 seed = 10000000
 min_price = 0
@@ -25,8 +26,6 @@ prev = 0
 cur = 0
 min_rate = 1.01
 max_rate = 1.01
-force_sell_rate = 1.01
-force_buy_rate = 1.01
 oversold_rsi = 20
 overbought_rsi = 80
 
@@ -85,8 +84,9 @@ class backTest:
 				logging.debug(f"[Sell] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
 				logging.debug(f"[Sell] Seed: {seed}")
 				coin_num = 0
-				order_price = 0
-				order.append("Sell")
+				order_price = price
+				sell_order.append(order_price)
+				buy_order.append(-1)
 			else:
 				if self.sell_condition(price):
 					sell = price*coin_num 
@@ -94,12 +94,15 @@ class backTest:
 					logging.debug(f"[Sell] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
 					logging.debug(f"[Sell] Seed: {seed}")
 					coin_num = 0
-					order_price = 0
-					order.append("Sell")
+					order_price = price
+					sell_order.append(order_price)
+					buy_order.append(-1)
 				else:
-					order.append("Nothing")
+					sell_order.append(-1)
+					buy_order.append(-1)
 		else:
-			order.append("Nothing")
+			sell_order.append(-1)
+			buy_order.append(-1)
 
 	def buy(self, price, force):
 		global seed, coin_num
@@ -109,7 +112,8 @@ class backTest:
 				coin_num += buy_num
 				seed -= (buy_num*price) 
 				order_price = price
-				order.append("Buy")
+				buy_order.append(order_price)
+				sell_order.append(-1)
 				logging.debug(f"[Buy] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
 				logging.debug(f"[Buy] Seed: {seed}")
 			else:
@@ -118,20 +122,24 @@ class backTest:
 					coin_num += buy_num
 					seed -= (buy_num*price) 
 					order_price = price
-					order.append("Buy")
+					buy_order.append(order_price)
+					sell_order.append(-1)
 					logging.debug(f"[Buy] price: {price}  - number:  {coin_num} - coin Seed: {price*coin_num}")
 					logging.debug(f"[Buy] Seed: {seed}")
 				else:
-					order.append("Nothing")
+					buy_order.append(-1)
+					sell_order.append(-1)
 		else:
-			order.append("Nothing")
+			buy_order.append(-1)
+			sell_order.append(-1)
 
 	def run_backTest(self, ticker, tic, start, end, display_chart):
 		global seed, first, coin_num, start_price, end_price, min_price, max_price
 		seed = first
 		coin_num =0
 
-		order.clear()
+		sell_order.clear()
+		buy_order.clear()
 		data = db.make_tick_db(start, end, ticker, tic)
 		for i in range(len(data)):
 			rsi_k = data.iloc[i]['rsi_k']
@@ -146,26 +154,29 @@ class backTest:
 				end_price = price
 
 			if math.isnan(rsi_k) or math.isnan(rsi_d):
-				order.append("Nothing")
+				sell_order.append(-1)
+				buy_order.append(-1)
 				continue
 
 			if i > 0:
 				pre = data.iloc[i-1]['rsi_k']
 				cur = rsi_k
 
-			if (rsi_k > rsi_d) and (rsi_k > overbought_rsi) and signal > 0:
+			if (rsi_k > rsi_d) and (rsi_k < oversold_rsi) and signal > 0:
 				self.buy(price, False)
-			elif (rsi_k < rsi_d) and (rsi_k < oversold_rsi) and signal < 0:
+			elif (rsi_k < rsi_d) and (rsi_k > overbought_rsi) and signal < 0:
 				self.sell(price, False)
 			else:
-				order.append("Nothing")
+				sell_order.append(-1)
+				buy_order.append(-1)
 
 		sell = price*coin_num
 		seed += sell
 		coin_num = 0
 		total_profit = self.display_account(ticker, tic, start, end)
-		data['order'] = order
-
+		data['buy_order'] = buy_order
+		data['sell_order'] = sell_order
+		data.to_csv("./tick_db.csv")
 		if display_chart:
 			dw.display_rsi(data)
 
@@ -175,19 +186,21 @@ class backTest:
 if __name__ == '__main__':
 	a = backTest()
 	# a.run_backTest('KRW-ETH',240,'2023-01-01 00:00:00', '2024-01-01 00:00:00', False)
-	date_str = '2023-09-01 00:00:00'
+	date_str = '2021-07-01 00:00:00'
 	start = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
 
-	time_gap = timedelta(days=60)
-	tic = ['240']
-	ticker = ['KRW-ETH', 'KRW-XRP']
-	total_profit = [0, 0]
-	for i in range(0,2): #Ticker
-		for j in range(1): #Tic
-			for k in range(3): #Range
-				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), False)
+	time_gap = timedelta(days=30*12*2)
+	tic = ['60']
+	tic_num = len(tic)
+	ticker = ['KRW-BTC', 'KRW-ETH', 'KRW-ETC']
+	ticker_num = len(ticker)
+	total_profit = [0 for _ in range(ticker_num)]
+	for i in range(0, ticker_num): #Ticker
+		for j in range(tic_num): #Tic
+			for k in range(1): #Range
+				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), True)
 
 	logging.info(f"\n======== Total Profit =========")
-	logging.info(f"{ticker[0]} : {round(total_profit[0], 2)} %")
-	logging.info(f"{ticker[1]} : {round(total_profit[1], 2)} %")
+	for i in range(ticker_num):
+		logging.info(f"{ticker[i]} : {round(total_profit[i], 2)} %")
 	logging.info(f"============================\n")
