@@ -5,6 +5,7 @@ import sys
 import logging
 from datetime import datetime, timedelta
 
+# logging.basicConfig(level=logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.INFO)
 my_format = logging.Formatter('%(message)s')
@@ -16,8 +17,8 @@ LOGGER.setLevel(logging.INFO)
 
 buy_order = list()
 sell_order = list()
-first = 10000000
-seed = 10000000
+first = 1000000000
+seed = 1000000000
 min_price = 0
 max_price = 0
 coin_num = 0
@@ -39,13 +40,20 @@ class backTest:
 
 		logging.info("\n-----------------------------------------------------------------------------")
 		logging.info(f"Ticker, Tic: {title}, {tics}")
-		logging.info(f"Range : {start_time} - {end_time}")
-		logging.info(f"Start Seed: {round(first)} won")
-		logging.info(f"End Seed: {round(seed)} won")
-		logging.info(f"Start Price: {round(start_price)} won")
-		logging.info(f"End Price: {round(end_price)} won")
-		logging.info(f"Change Rate : {round(((end_price-start_price)*100/start_price),2)} %)")
-		logging.info(f"Profit : {round((seed-first)*100/first,2)} %")
+		logging.info(f"Range : {start_time} ~ {end_time}")
+		logging.info("Start Seed: ")
+		logging.info("{0:>30,} KRW".format(round(first)))
+		logging.info("Stop Seed: ")
+		logging.info("{0:>30,} KRW".format(round(seed)))
+		logging.info("Start Price: ")
+		logging.info("{0:>30,} KRW".format(round(start_price)))
+		logging.info("End Price: ")
+		logging.info("{0:>30,} KRW".format(round(end_price)))
+		logging.info("Change Rate: ")
+		logging.info("(Start - End price) ")
+		logging.info("{0:>30,} %".format(round(((end_price-start_price)*100/start_price))))
+		logging.info("Profit : ")
+		logging.info("{0:>30,} %".format(round((seed-first)*100/first)))
 		logging.info("-----------------------------------------------------------------------------\n")
 		return round((seed-first)*100/first,2)
 
@@ -141,6 +149,7 @@ class backTest:
 		sell_order.clear()
 		buy_order.clear()
 		data = db.make_tick_db(start, end, ticker, tic)
+		# logging.info(data)
 		for i in range(len(data)):
 			rsi_k = data.iloc[i]['rsi_k']
 			rsi_d = data.iloc[i]['rsi_d']
@@ -176,7 +185,7 @@ class backTest:
 		total_profit = self.display_account(ticker, tic, start, end)
 		data['buy_order'] = buy_order
 		data['sell_order'] = sell_order
-		data.to_csv("./tick_db.csv")
+		# data.to_csv("./tick_db.csv")
 		if display_chart:
 			dw.display_rsi(data)
 
@@ -198,9 +207,10 @@ if __name__ == '__main__':
 	for i in range(0, ticker_num): #Ticker
 		for j in range(tic_num): #Tic
 			for k in range(1): #Range
-				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), True)
+				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), False)
 
-	logging.info(f"\n======== Total Profit =========")
+	logging.info(f"\n========== Total Profit ==========")
 	for i in range(ticker_num):
-		logging.info(f"{ticker[i]} : {round(total_profit[i], 2)} %")
-	logging.info(f"============================\n")
+		logging.info(f"{ticker[i]} :")
+		logging.info("{0:>30,} %".format(round(total_profit[i])))
+	logging.info(f"==================================\n")
