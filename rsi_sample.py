@@ -51,8 +51,8 @@ def display_rsi(data):
 							 marker_color = "rgba(255,0,0,0.7)",
 							 name = "Exits"),
 				  row=1, col=1)
-	fig.add_trace(go.Scatter(x=time, y=k), row=2, col=1)
-	fig.add_trace(go.Scatter(x=time, y=d), row=2, col=1)
+	fig.add_trace(go.Scatter(x=time, y=k, name = "Stoch_K"), row=2, col=1)
+	fig.add_trace(go.Scatter(x=time, y=d, name = "Stoch_D"), row=2, col=1)
 	fig.add_hline(y=80, row=2, col=1)
 	fig.add_hline(y=20, row=2, col=1)
 	fig.update_layout(xaxis_rangeslider_visible=False)

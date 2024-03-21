@@ -34,6 +34,7 @@ start_price = 0
 end_price = 0
 order_price = 0
 total_profit = 0
+display_chart = False
 
 class backTest:
 	def display_account(self, title, tics, start_time, end_time):
@@ -49,10 +50,10 @@ class backTest:
 		logging.info("{0:>30,} KRW".format(round(start_price)))
 		logging.info("End Price: ")
 		logging.info("{0:>30,} KRW".format(round(end_price)))
-		logging.info("Change Rate: ")
+		logging.info("Coin Price Change Rate: ")
 		logging.info("(Start - End price) ")
 		logging.info("{0:>30,} %".format(round(((end_price-start_price)*100/start_price))))
-		logging.info("Profit : ")
+		logging.info("Trading Profit Rate : ")
 		logging.info("{0:>30,} %".format(round((seed-first)*100/first)))
 		logging.info("-----------------------------------------------------------------------------\n")
 		return round((seed-first)*100/first,2)
@@ -195,19 +196,19 @@ class backTest:
 if __name__ == '__main__':
 	a = backTest()
 	# a.run_backTest('KRW-ETH',240,'2023-01-01 00:00:00', '2024-01-01 00:00:00', False)
-	date_str = '2021-07-01 00:00:00'
+	date_str = '2022-01-01 00:00:00'
 	start = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
 
-	time_gap = timedelta(days=30*12*2)
+	time_gap = timedelta(days=31*12*2)
 	tic = ['60']
 	tic_num = len(tic)
-	ticker = ['KRW-BTC', 'KRW-ETH', 'KRW-ETC']
+	ticker = ['KRW-BTC', 'KRW-ETH']
 	ticker_num = len(ticker)
 	total_profit = [0 for _ in range(ticker_num)]
 	for i in range(0, ticker_num): #Ticker
 		for j in range(tic_num): #Tic
 			for k in range(1): #Range
-				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), False)
+				total_profit[i] += a.run_backTest(ticker[i], tic[j], start+time_gap*k, start+time_gap*(k+1), display_chart)
 
 	logging.info(f"\n========== Total Profit ==========")
 	for i in range(ticker_num):
